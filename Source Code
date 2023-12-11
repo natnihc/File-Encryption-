@@ -1,0 +1,64 @@
+from cryptography.fernet import Fernet, InvalidToken
+import os
+
+def generate_key():
+    return Fernet.generate_key()
+
+def write_key_to_file(key, key_filename):
+    with open(key_filename, 'wb') as key_file:
+        key_file.write(key)
+
+def load_key(key_filename):
+    return open(key_filename, 'rb').read()
+
+def encrypt_file(filename, key):
+    with open(filename, 'rb') as file:
+        plaintext = file.read()
+        cipher = Fernet(key)
+        encrypted_data = cipher.encrypt(plaintext)
+        encrypted_filename = f"{os.path.splitext(filename)[0]}_encrypted{os.path.splitext(filename)[1]}"
+        with open(encrypted_filename, 'wb') as encrypted_file:
+            encrypted_file.write(encrypted_data)
+
+        print(f"File '{filename}' encrypted successfully.")
+        print(f"Encrypted content saved to '{encrypted_filename}'.")
+
+def decrypt_file(filename, key):
+    with open(filename, 'rb') as file:
+        encrypted_data = file.read()
+        try:
+            cipher = Fernet(key)
+            decrypted_data = cipher.decrypt(encrypted_data)
+            decrypted_filename = f"{os.path.splitext(filename)[0]}_decrypted{os.path.splitext(filename)[1]}"
+            with open(decrypted_filename, 'wb') as decrypted_file:
+                decrypted_file.write(decrypted_data)
+            print(f"File '{filename}' decrypted successfully.")
+            print(f"Decrypted content saved to '{decrypted_filename}'.")
+        except InvalidToken:
+            print("Invalid token. Decryption failed. Make sure you are using the correct key.")
+
+def main():
+    print("~~~~~ Welcome to Secure Encryption Tool ~~~~~")
+    filename = input("Enter the file name with extension: ")
+    if not os.path.exists(filename):
+        print(f"File '{filename}' not found. Please check the file name and try again.")
+        return
+    key_filename = "secret.key"
+
+    if os.path.exists(key_filename):
+        key = load_key(key_filename)
+    else:
+        key = generate_key()
+        write_key_to_file(key, key_filename)
+        print(f"Key generated and saved to '{key_filename}'.")
+
+    action = input("Enter 'E' to encrypt or 'D' to decrypt the file: ").lower()
+    if action == 'e':
+        encrypt_file(filename, key)
+    elif action == 'd':
+        decrypt_file(filename, key)
+    else:
+        print("Invalid action. Please enter 'E' to encrypt or 'D' to decrypt.")
+
+if __name__ == "__main__":
+    main()
